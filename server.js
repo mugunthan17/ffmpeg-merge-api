@@ -27,7 +27,10 @@ app.post('/merge', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'audio', maxCount: 1 }
 ]), (req, res) => {
+  console.log('Request received at /merge');
+  console.log('Files:', req.files);
   if (!req.files || !req.files.image || !req.files.audio) {
+    console.error('Missing files!');
     return res.status(400).send('Please upload both image and audio files');
   }
 
