@@ -70,12 +70,15 @@ app.post("/merge", (req, res) => {
 
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        console.error("FFmpeg error:", stderr); // Log detailed FFmpeg errors
-        return res
-          .status(500)
-          .json({ error: "Error processing video.", details: stderr });
+        console.error("FFmpeg error details:", stderr);
+        return res.status(500).send(`Error processing video:\n${stderr}`);
       }
-      res.json({ video: outputPath });
+      res.download(outputPath, outputFilename, (err) => {
+        if (err) console.error("Error sending video:", err.message);
+        try {
+          fs.unlinkSync(outputPath);
+        } catch {}
+      });
     });
   });
 });
