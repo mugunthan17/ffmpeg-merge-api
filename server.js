@@ -4,8 +4,15 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const upload = multer({ dest: 'uploads/' });
 const app = express();
+
+// Multer storage config
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 30 * 1024 * 1024 // 30MB limit per file
+  }
+});
 
 app.post('/merge', upload.fields([
   { name: 'image', maxCount: 1 },
@@ -17,38 +24,50 @@ app.post('/merge', upload.fields([
 
   const imagePath = req.files.image[0].path;
   const audioPath = req.files.audio[0].path;
+  const outputDir = path.join(__dirname, 'outputs');
   const outputFilename = `output-${Date.now()}.mp4`;
-  const outputPath = path.join(__dirname, 'outputs', outputFilename);
+  const outputPath = path.join(outputDir, outputFilename);
 
   // Ensure outputs folder exists
-  if (!fs.existsSync(path.join(__dirname, 'outputs'))) {
-    fs.mkdirSync(path.join(__dirname, 'outputs'));
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
   }
 
-  // FFmpeg command to merge image + audio
-  const cmd = `ffmpeg -y -loop 1 -i ${imagePath} -i ${audioPath} -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p ${outputPath}`;
+  const cmd = `ffmpeg -y -loop 1 -i "${imagePath}" -i "${audioPath}" -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+
+  console.log('Running command:', cmd);
 
   exec(cmd, (error, stdout, stderr) => {
-    // Delete uploaded files after processing
-    fs.unlinkSync(imagePath);
-    fs.unlinkSync(audioPath);
+    console.log('FFmpeg stdout:', stdout);
+    console.error('FFmpeg stderr:', stderr);
 
-    if (error) {
-      console.error('FFmpeg error:', error.message);
-      console.error('FFmpeg stderr:', stderr); // This line is crucial for debugging
-      return res.status(500).send('Error processing video');
+    // Clean up input files
+    try {
+      fs.unlinkSync(imagePath);
+      fs.unlinkSync(audioPath);
+    } catch (err) {
+      console.warn('Failed to delete temp files:', err.message);
     }
 
+    if (error) {
+      console.error('FFmpeg failed:', error.message);
+      return res.status(500).send(`Error processing video: ${error.message}`);
+    }
+
+    // Send the resulting video
     res.download(outputPath, outputFilename, (err) => {
       if (err) {
-        console.error('Download error:', err);
+        console.error('Error sending video:', err.message);
       }
-      fs.unlinkSync(outputPath);
+      try {
+        fs.unlinkSync(outputPath); // Clean up output file
+      } catch (err) {
+        console.warn('Failed to delete output file:', err.message);
+      }
     });
   });
-}); // ← you were missing this closing brace
+});
 
-// Moved outside the route
 app.get('/', (req, res) => {
   res.send('FFmpeg API is running. Use /merge endpoint.');
 });
