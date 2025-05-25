@@ -45,6 +45,10 @@ app.post('/merge', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio
   });
 });
 
+app.get('/', (req, res) => {
+    res.send('FFmpeg API is running. Use /merge endpoint.');
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Merge API listening on port ${PORT}`);
