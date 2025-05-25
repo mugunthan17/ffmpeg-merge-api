@@ -45,7 +45,7 @@ app.post('/merge', upload.fields([
     fs.mkdirSync(outputDir);
   }
 
-  const cmd = `ffmpeg -y -loop 1 -i "${imagePath}" -i "${audioPath}" -c:v libx264 -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
+  const cmd = `ffmpeg -y -loop 1 -i "${imagePath}" -i "${audioPath}" -c:v libx264 -c:a aac -b:a 192k -shortest -t 10 -pix_fmt yuv420p "${outputPath}"`;
 
   console.log('Running command:', cmd);
 
