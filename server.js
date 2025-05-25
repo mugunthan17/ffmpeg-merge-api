@@ -10,7 +10,16 @@ const app = express();
 const upload = multer({
   dest: 'uploads/',
   limits: {
-    fileSize: 30 * 1024 * 1024 // 30MB limit per file
+    fileSize: 30 * 1024 * 1024 // 30MB per file
+  },
+  fileFilter: (req, file, cb) => {
+    // Optional: accept only certain mime types
+    const allowedMimes = ['image/png', 'image/jpeg', 'audio/mpeg', 'audio/mp3'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
   }
 });
 
