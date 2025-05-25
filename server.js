@@ -4,7 +4,10 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+    dest: 'uploads/',
+    limits: { fieldSize: 50 * 1024 * 1024 } // 50MB
+  });
 const app = express();
 
 app.post('/merge', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio', maxCount: 1 }]), (req, res) => {
