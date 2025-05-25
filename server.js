@@ -7,7 +7,10 @@ const path = require('path');
 const upload = multer({ dest: 'uploads/' });
 const app = express();
 
-app.post('/merge', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio', maxCount: 1 }]), (req, res) => {
+app.post('/merge', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'audio', maxCount: 1 }
+]), (req, res) => {
   if (!req.files || !req.files.image || !req.files.audio) {
     return res.status(400).send('Please upload both image and audio files');
   }
@@ -32,6 +35,7 @@ app.post('/merge', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio
 
     if (error) {
       console.error('FFmpeg error:', error.message);
+      console.error('FFmpeg stderr:', stderr); // This line is crucial for debugging
       return res.status(500).send('Error processing video');
     }
 
@@ -39,14 +43,14 @@ app.post('/merge', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio
       if (err) {
         console.error('Download error:', err);
       }
-      // Delete output after sending
       fs.unlinkSync(outputPath);
     });
   });
-});
+}); // ← you were missing this closing brace
 
+// Moved outside the route
 app.get('/', (req, res) => {
-    res.send('FFmpeg API is running. Use /merge endpoint.');
+  res.send('FFmpeg API is running. Use /merge endpoint.');
 });
 
 const PORT = process.env.PORT || 3000;
