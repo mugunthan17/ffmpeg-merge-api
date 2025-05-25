@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-# Install ffmpeg
+# Install ffmpeg (Alpine package)
 RUN apk add --no-cache ffmpeg
 
 WORKDIR /app
