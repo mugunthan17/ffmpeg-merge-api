@@ -48,8 +48,8 @@ const ensureDirExists = (dir) => {
 ensureDirExists('uploads');
 ensureDirExists('outputs');
 
-app.post('/', (req, res) => {
-  res.send('running');
+app.get('/', (req, res) => {
+  res.send('Microservice is running');
 });
 
 app.post('/merge', (req, res) => {
