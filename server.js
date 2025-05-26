@@ -48,6 +48,10 @@ const ensureDirExists = (dir) => {
 ensureDirExists('uploads');
 ensureDirExists('outputs');
 
+app.post('/', (req, res) => {
+  res.send('running');
+});
+
 app.post('/merge', (req, res) => {
   upload(req, res, (err) => {
     if (err) {
