@@ -7,57 +7,54 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure directories exist
-const ensureDirExists = (dir) => {
+// Create upload/output dirs if missing
+['uploads', 'outputs'].forEach((dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-};
-ensureDirExists('uploads');
-ensureDirExists('outputs');
+});
 
 // Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, uniqueName);
+    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, name);
   }
 });
-
 const upload = multer({
   storage,
-  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB max
+  limits: { fileSize: 30 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['image/png', 'image/jpeg', 'audio/mpeg', 'audio/mp3'];
-    allowed.includes(file.mimetype) ? cb(null, true) : cb(new Error('Unsupported file type'));
+    cb(allowed.includes(file.mimetype) ? null : new Error('Unsupported file'), true);
   }
 }).fields([
   { name: 'image', maxCount: 1 },
   { name: 'audio', maxCount: 1 }
 ]);
 
-// Health check
+// Health route
 app.get('/', (req, res) => {
   res.send('Microservice is running');
 });
 
-// Merge route
+// /merge endpoint
 app.post('/merge', (req, res) => {
   upload(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.files?.image?.[0] || !req.files?.audio?.[0]) {
-      return res.status(400).json({ error: 'Image and audio files are required' });
+      return res.status(400).json({ error: 'Both image and audio are required' });
     }
 
     const imagePath = req.files.image[0].path;
     const audioPath = req.files.audio[0].path;
-    const outputPath = path.join('outputs', `output-${Date.now()}.mp4`);
+    const outputPath = path.join('outputs', `video-${Date.now()}.mp4`);
 
     const cmd = `ffmpeg -y -loop 1 -i "${imagePath}" -i "${audioPath}" -c:v libx264 -tune stillimage -c:a aac -b:a 192k -shortest -pix_fmt yuv420p "${outputPath}"`;
 
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        console.error('FFmpeg error:', stderr);
+        console.error(stderr);
         return res.status(500).json({ error: 'FFmpeg processing failed' });
       }
       res.json({ video: outputPath });
