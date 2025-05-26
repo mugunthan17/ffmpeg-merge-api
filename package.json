@@ -1,14 +1,13 @@
 {
   "name": "ffmpeg-merge-api",
   "version": "1.0.0",
-  "description": "Simple API to merge image and audio into video",
+  "description": "Microservice to merge image and audio into video",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "axios": "^1.9.0",
-    "express": "^5.1.0",
-    "multer": "^2.0.0"
+    "express": "^4.19.2",
+    "multer": "^1.4.5"
   }
 }
